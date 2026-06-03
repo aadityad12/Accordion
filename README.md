@@ -4,121 +4,85 @@
 
 ### Your agent's memory shouldn't have to forget to keep going.
 
-**Continuous, reversible, turn-level context compression for AI coding agents.**
-
-*Stop throwing away your context. Start folding it.*
+**See everything your AI agent is holding in context — and fold, unfold, and pin any part of it, by hand or automatically.**
 
 </div>
 
 ---
 
-## The problem everyone has but nobody fixes
+> 📖 **The full product spec is in [VISION.md](VISION.md). This page is the short version.**
 
-Every long-running agent hits the same wall: the context window fills up.
+## The problem
 
-Today there are exactly two answers, and both are bad:
+Every long-running agent hits the same wall: the context window fills up, and something has to go. Today's answers are both bad — **compaction** blasts your whole history into one lossy summary (slow, destructive, all-or-nothing), and **sliding windows** just drop the oldest tokens (the agent simply forgets). Both treat context as a buffer to flush: the detail is gone, you never saw it go, and you can't get it back.
 
-1. **Compaction** (`/compact`) — blast your entire history into one lossy summary. It's **slow** (a giant blocking LLM call right when you're in flow), it's **destructive** (the originals are gone — that detail from 40 turns ago you suddenly need? vaporized), and it's **all-or-nothing** (you can't compact *some* of it).
-2. **Sliding window** — just drop the oldest tokens. Cheap, and catastrophically dumb. The agent simply forgets.
+## The idea
 
-Both treat context like a buffer to be flushed. We think that's the original sin.
+> Context isn't a buffer. It's an accordion.
 
-## The insight
+Accordion shows the agent's context as a list of **sections** — one per turn — and lets you resize it instead of flushing it. Every section is **Full**, **Folded** (shown as a short summary), or **Pinned** (locked open). Four actions move them:
 
-> **Context isn't a buffer. It's an accordion.**
+- **Fold** — replace a section with its summary to free up room.
+- **Unfold** — bring it back to full detail (still auto-managed, unless pinned).
+- **Pin / Unpin** — lock a section open so nothing folds it automatically.
+- **Peek** — read a folded section in the window *without* changing the agent's context.
 
-You don't *delete* the old part of the conversation. You **fold** it — compress each section into a compact digest that stays in the model's view — and you keep the ability to **unfold any section back to full fidelity, instantly, at any time.**
+Nothing is ever deleted — folding only changes what the agent is *shown*, never what's *stored* — so every fold is instantly reversible, with no database or search index behind it.
 
-The breakthrough that makes this practically free: in a modern agent runtime, the message array sent to the model is just a *view*. The full history already lives on disk, immutable. So:
+## Three hands on the same controls
 
-- **Folding** = swap a section for its summary *in the outgoing view only*.
-- **Unfolding** = stop swapping. The original was never gone.
+- **You** — fold, unfold, pin, and peek, by hand.
+- **The agent** — reaches back to unfold or pin context it needs mid-task.
+- **The Conductor** — Accordion's automatic mode: between every turn it folds what's gone cold and unfolds what's becoming relevant, on its own.
 
-That single observation collapses what sounds like a hard "reversible compression" problem into a pure function over an array. No vector DB. No separate memory store. No retrieval pipeline to babysit. **Reversibility costs nothing because nothing was ever destroyed.**
+And folds nest: cold turns fold into **groups**, groups into bigger groups, so a session of thousands of turns stays small enough to fit and complete enough to recover. It all happens in a **separate window** where every change is shown and attributed — open it to watch and steer, close it to let the Conductor run.
 
-And it unlocks a design freedom no compaction scheme has ever had: because any detail is one unfold away, **summaries can be aggressive.** Lossiness stops being a risk and becomes a lever.
+→ Full details, capability matrix, and a walkthrough: **[VISION.md](VISION.md)**
 
-## How it works
+## Why it's different
 
-Accordion sits between your agent and the model and continuously reshapes the context:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  🪗 FOLDED  ·  turns 1–38 compressed into a live digest   │  ← summarized, ~3k tokens
-│             ·  any turn one command away from full detail │
-├─────────────────────────────────────────────────────────┤
-│  ▢ EXPANDED ·  turn 12 (you pinned it open)               │  ← full fidelity, on demand
-├─────────────────────────────────────────────────────────┤
-│                                                           │
-│  ▣ LIVE     ·  turns 39–47, full fidelity                 │  ← the recent working set
-│             ·  always uncompressed                        │
-│                                                           │
-└─────────────────────────────────────────────────────────┘
-```
-
-- **A rolling boundary with hysteresis.** The most recent slice of conversation always stays at full fidelity (a configurable band — e.g. keep the live tail under 150k tokens; once it crosses, fold the oldest sections until it's back under 25k). No thrashing, no per-turn churn.
-- **Section-level granularity.** Each section folds and unfolds *independently* — that's the accordion. Not one monolithic summary; many addressable pleats.
-- **Tool-call safety by construction.** Accordion only ever folds whole turns, so a tool call is never severed from its result. The folded view is byte-for-byte the shape the runtime already trusts — provider-safe, no special-casing.
-- **Summaries are computed once and cached forever**, because folded history is immutable. You never pay to summarize the same turn twice.
-
-The result: compaction that is **continuous instead of catastrophic**, **reversible instead of destructive**, and **free of the dreaded mid-task stall.**
-
-## Why this wins
-
-| | Sliding window | `/compact` | RAG / external memory | **🪗 Accordion** |
+| | Sliding window | `/compact` | Black-box memory | 🪗 Accordion |
 |---|:---:|:---:|:---:|:---:|
 | Keeps old context usable | ❌ | ⚠️ lossy | ⚠️ if retrieved | ✅ |
-| **Reversible** (restore full detail) | ❌ | ❌ | ❌ | ✅ |
-| No mid-task blocking stall | ✅ | ❌ | ✅ | ✅ |
+| **Reversible** to full detail | ❌ | ❌ | ❌ | ✅ |
+| No mid-task stall | ✅ | ❌ | ✅ | ✅ |
 | Per-section, not all-or-nothing | ❌ | ❌ | ⚠️ | ✅ |
+| You can see and steer it | ❌ | ❌ | ❌ | ✅ |
 | No extra infra (no vector DB) | ✅ | ✅ | ❌ | ✅ |
-| Transparent to the model | ✅ | ✅ | ❌ | ✅ |
-
-MemGPT made the agent manage its own paging. Accordion makes paging **invisible** — the model just sees a coherent, well-sized context, and the system quietly handles fidelity behind it.
 
 ## Status
 
-Accordion ships today as a working extension for [**pi**](https://www.npmjs.com/package/@earendil-works/pi-coding-agent), the coding agent. The core fold/expand engine is implemented and running; summarization is moving from a deterministic structured digest to LLM-generated summaries with a quality eval harness behind it.
+[VISION.md](VISION.md) is the north star — the finished product we're building toward. What exists **today** is an early proof-of-concept:
 
-> **Tested in anger across long agent sessions.** The architecture is deliberately runtime-agnostic — the core is a pure transform over a message array, so porting it to other agent frameworks is a matter of adapters, not rewrites.
+- A [pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) extension (`src/accordion.ts`) that automatically folds older turns as context grows and keeps the recent window at full fidelity.
+- Reversible folding (originals retained), manual `/expand` and `/collapse`, and an `/accordion` status view.
+- Summaries today are deterministic digests, not yet LLM-generated.
 
-### Commands
+Honest about what's **not** there yet: no visual window, no autonomous Conductor, no agent-driven control, no hierarchical folding — that's the build ahead. (The POC is implemented and syntax-checked; it hasn't yet been exercised across a long real session.)
 
-| Command | What it does |
-|---|---|
-| `/accordion` | Status table — every section, its state (LIVE / folded / EXPANDED) and token weight |
-| `/expand <n>` | Unfold a section back to full fidelity |
-| `/collapse <n>` | Re-fold it |
-
-## Quickstart
+### Try the proof-of-concept
 
 ```bash
-# Drop the extension into pi's auto-discovery directory
 cp src/accordion.ts ~/.pi/agent/extensions/accordion.ts
-
-# Start pi — Accordion loads automatically. Tune the band at the top of the file.
-pi
+pi   # Accordion loads automatically; tune the fold band at the top of the file
 ```
 
-Then just... work. When your context gets long, Accordion folds the old sections for you. Need something back? `/expand`.
+Commands: `/accordion` (status) · `/expand <n>` · `/collapse <n>`
 
 ## Roadmap
 
-- [x] Core fold/expand engine (pure, reversible, tool-pair safe)
-- [x] Rolling boundary with hysteresis
-- [x] Manual expansion + status UI
-- [ ] LLM-generated summaries with caching (in progress)
-- [ ] Recall/faithfulness eval harness
-- [ ] **Hierarchical folding** — fold the folds; a true multi-level accordion for million-turn sessions
-- [ ] **Relevance-driven auto-expansion** — the system unfolds what the current task needs, before you ask
-- [ ] Adapters for additional agent runtimes
-
-## Why now
-
-Agents are getting longer-horizon by the month, and context windows — even the big ones — are the binding constraint on how far a single session can go. The industry's answer has been "summarize harder." We think the answer is to **stop deleting in the first place.** Make context elastic, not disposable. Fold, don't forget.
-
-🪗
+- [x] Core fold/unfold engine — reversible, tool-pair safe *(POC)*
+- [x] Rolling automatic folding + manual expansion *(POC)*
+- [ ] LLM-generated summaries, computed once and cached
+- [ ] The separate window — see, steer, replay
+- [ ] The Conductor — automatic fold/unfold between turns, based on context
+- [ ] Hierarchical folding — fold the folds, for million-turn sessions
+- [ ] Agent-driven unfold and pin
 
 ---
+
+**The north star: your agent's memory should be something you can see and steer — not a black box that silently forgets.**
+
+🪗
 
 <sub>An experiment in context engineering. Contributions, ideas, and benchmarks welcome.</sub>
