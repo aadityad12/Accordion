@@ -5,7 +5,7 @@
   <img alt="Accordion" src="docs/assets/logo-lockup-black.png" width="440">
 </picture>
 
-### Compaction is naive — and developers hate it.
+### /compact a naive solution — Developers hate it.
 
 **See everything your AI agent holds in context — and fold it like an accordion instead.**
 
