@@ -1,14 +1,14 @@
 
 <div align="center">
 
-### /compact is the naive solution, Accordion is the intelligent one.
-
-**See everything your AI agent holds in context — and fold it like an accordion instead.**
-
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-lockup-white.png">
   <img alt="Accordion" src="docs/assets/logo-lockup-black.png" width="440">
 </picture>
+
+### /compact is the naive solution, Accordion is the intelligent one.
+
+**See everything your AI agent holds in context — and fold it like an accordion instead.**
 
 
 <img src="docs/assets/accordion-hero.gif" alt="Accordion — the context map demo: blocks folding and unfolding while the protected tail stays intact" width="820">
