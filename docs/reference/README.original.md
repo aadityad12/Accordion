@@ -2,19 +2,19 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-lockup-white.png">
-  <img alt="Accordion" src="docs/assets/logo-lockup-black.png" width="440">
+  <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/logo-lockup-white.png">
+  <img alt="Accordion" src="../../docs/assets/logo-lockup-black.png" width="440">
 </picture>
 
 ### /compact is the naive solution, Accordion is the intelligent one.
 
 **See everything your AI agent holds in context — and fold it like an accordion instead.**
 
-<img src="docs/assets/accordion-hero.gif" alt="Accordion — the context map demo: blocks folding and unfolding while the protected tail stays intact" width="820">
+<img src="../../docs/assets/accordion-hero.gif" alt="Accordion — the context map demo: blocks folding and unfolding while the protected tail stays intact" width="820">
 
 <sub>Your whole context window split in 2 sections. The lower section represents your agent's most recent context and is protected against any interference</sub>
 
-[get-accordion.dev](https://get-accordion.dev/) &nbsp;·&nbsp; [npm](https://www.npmjs.com/package/@a-fig/accordion) &nbsp;·&nbsp; [VISION.md](VISION.md)
+[get-accordion.dev](https://get-accordion.dev/) &nbsp;·&nbsp; [npm](https://www.npmjs.com/package/@a-fig/accordion) &nbsp;·&nbsp; [VISION.md](../../VISION.md)
 </div>
 
 ---
@@ -24,7 +24,7 @@ your agent's entire context window at a glance and lets you manage it manually o
 
 <div align="center">
 
-<a href="docs/assets/accordion-demo.mp4"><img src="docs/assets/map-hero.png" alt="Accordion's context Map — a live pi session rendered as a grid of colored blocks" width="860"></a>
+<a href="../../docs/assets/accordion-demo.mp4"><img src="../../docs/assets/map-hero.png" alt="Accordion's context Map — a live pi session rendered as a grid of colored blocks" width="860"></a>
 
 </div>
 
@@ -58,7 +58,7 @@ go. Today's answers are dumb and dumber:
 ## The proof — early, but pointed
 
 Accordion ships with a catalog of interchangeable **Conductors**. The strongest so far,
-**[Thermocline](conductors/ws/thermocline/)**, scores each block relevance to the most recent context using the attention from a 500M parameter model as a proxy.
+**[Thermocline](../../conductors/ws/thermocline/)**, scores each block relevance to the most recent context using the attention from a 500M parameter model as a proxy.
 
 In a test run on **SlopCodeBench** (a long-horizon coding benchmark), Thermocline at a
 100k-token budget outperformed naive compaction with the same constrained context budget. Both used DeepSeek V4 Pro.
@@ -93,7 +93,7 @@ Every block is **Full**, **Folded** (shown as a short tagged summary), or **Pinn
 (locked open).
 
 <div align="center">
-<img src="docs/assets/attention-conductor.png" alt="Attention conductor view — each block tinted by how much the working tail still attends back to it" width="600">
+<img src="../../docs/assets/attention-conductor.png" alt="Attention conductor view — each block tinted by how much the working tail still attends back to it" width="600">
 <br><sub>Folded blocks are shown with dull colors </sub>
 </div>
 
@@ -102,7 +102,7 @@ thousands of turns stays small enough to fit and complete enough to recover. And
 recent past is always safe — the most recent ~20k tokens are a protected working tail the
 agent reasons over at full fidelity (the thick-bordered box below the fold line).
 
-→ Capability matrix, full walkthrough, and the deep spec: **[VISION.md](VISION.md)**
+→ Capability matrix, full walkthrough, and the deep spec: **[VISION.md](../../VISION.md)**
 
 ## The conductors
 
@@ -111,31 +111,31 @@ edits between turns, and every edit goes through the same rules your own hand fo
 conductor can never do something you couldn't do yourself. Five ship today. Pick one from the
 header menu, or leave it on None and steer everything by hand.
 
-**[thermocline](conductors/ws/thermocline/)** is the strongest one so far, and the one the
+**[thermocline](../../conductors/ws/thermocline/)** is the strongest one so far, and the one the
 benchmark above used. It combines two earlier experiments: a small probe model that scores how
 much the recent context still attends to each block, which decides the order things get
 compressed in, and real LLM summaries, which decide how far each one gets compressed. On top of
 both it enforces a hard budget, and when your cap is genuinely impossible to hit it says so
 instead of quietly blowing past it.
 
-**[triptych](conductors/ws/triptych/)** came out of asking what actually fills a coding session
+**[triptych](../../conductors/ws/triptych/)** came out of asking what actually fills a coding session
 up, which is almost always file reads. It splits the context into three bands by age: the recent
 third is left alone, the middle band turns code reads into tree-sitter skeletons that keep every
 signature and drop the bodies, and the oldest third gets summarized. The skeletons stay
 recoverable, so the agent can pull the full source back with `recall` when it needs it.
 
-**[doorman](conductors/in-process/doorman/)** takes its idea from
+**[doorman](../../conductors/in-process/doorman/)** takes its idea from
 [The Token Company](https://thetokencompany.com): shrink content on the way to the model,
 before it ever costs you full price. A huge tool result lands inside the protected tail the
 moment it arrives, so the model sees it at full size on the very first call, and doorman
 catches those on their way out and folds them before they reach the model at all. It's a cheap
 proof of concept, so don't reach for it as a real strategy.
 
-**[handoff](conductors/in-process/handoff/)** is `/handoff`, automatic. The manual version is to
+**[handoff](../../conductors/in-process/handoff/)** is `/handoff`, automatic. The manual version is to
 ask the agent to write a handoff document, kill the session, and paste that document into a
 fresh one. This does all three for you without you leaving the session.
 
-**[compaction-naive](conductors/in-process/compaction-naive/)** re-implements the `/compact` you
+**[compaction-naive](../../conductors/in-process/compaction-naive/)** re-implements the `/compact` you
 already have in Claude Code, ChatGPT and everywhere else. It is the baseline the other four get
 measured against, and it makes the point that Accordion covers what exists today before it does
 anything past that.
@@ -146,7 +146,7 @@ edits so its work survives being removed.
 
 thermocline and triptych run as their own process and ship with the repo. They aren't in the
 npm package, so they only show up in the picker when you run Accordion from a checkout. Details
-on each are in **[conductors/](conductors/)**.
+on each are in **[conductors/](../../conductors/)**.
 
 ## What works today
 
@@ -293,12 +293,12 @@ surfaces.
 
 To refresh the binary after `main` moves (close any open Accordion window first so the
 file isn't locked, then `git pull`, `npm install`, and rebuild): see
-**[CONTRIBUTING.md](CONTRIBUTING.md)**.
+**[CONTRIBUTING.md](../../CONTRIBUTING.md)**.
 
 ## Contributing
 
 An experiment in context engineering — contributions, ideas, and benchmarks welcome.
-Setup, the quality gate, and platform gotchas are in **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+Setup, the quality gate, and platform gotchas are in **[CONTRIBUTING.md](../../CONTRIBUTING.md)**.
 
 Our main frontier right now is **better conductors**: researching which context actually
 matters, developing stronger strategies, and testing them against real sessions. We're not
