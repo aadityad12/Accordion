@@ -24,11 +24,6 @@ planned, not yet implemented.
 
 Setup instructions will be added when the new integration is ready.
 
-## Origins
-
-Forked from Accordion, with this new direction being developed together with
-Aditya (Aadi).
-
 The [original README](docs/reference/README.original.md) is preserved as an
 upstream reference, not as setup instructions for CPA Accordion.
 
